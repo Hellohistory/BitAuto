@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Titan Docker 部署脚本（优化版）
+# Titan Docker 部署脚本（国内优化版）
 LOG_FILE="$HOME/titan_install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -41,7 +41,7 @@ ensure_locale() {
     fi
 }
 
-# 检查并安装 Docker
+# 检查并安装 Docker（国内镜像源）
 install_docker() {
     if ! command -v docker &>/dev/null; then
         log_message "Docker 未安装，正在安装 Docker..." \
@@ -53,18 +53,21 @@ install_docker() {
                     sudo apt-get update && sudo apt-get install -y \
                         apt-transport-https ca-certificates curl software-properties-common \
                         || handle_error "依赖安装失败，退出。" "Dependency installation failed."
-                    curl -fsSL https://download.docker.com/linux/$ID/gpg | \
-                        sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg || \
+                    log_message "使用阿里云镜像源下载 Docker GPG 密钥..." "Using Aliyun mirror to download Docker GPG key..."
+                    sudo mkdir -p /etc/apt/keyrings
+                    curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/$ID/gpg | \
+                        sudo tee /etc/apt/keyrings/docker.gpg > /dev/null || \
                         handle_error "获取 Docker GPG 密钥失败。" "Failed to fetch Docker GPG key."
-                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$ID $(lsb_release -cs) stable" | \
+                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.aliyun.com/docker-ce/linux/$ID $(lsb_release -cs) stable" | \
                         sudo tee /etc/apt/sources.list.d/docker.list > /dev/null || \
                         handle_error "Docker 源配置失败。" "Failed to configure Docker repository."
                     sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io || \
                         handle_error "Docker 安装失败。" "Failed to install Docker."
                     ;;
                 centos|rhel)
+                    log_message "使用阿里云镜像源配置 CentOS Docker 源..." "Configuring CentOS Docker source with Aliyun mirror..."
                     sudo yum install -y yum-utils || handle_error "yum-utils 安装失败。" "Failed to install yum-utils."
-                    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo || \
+                    sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo || \
                         handle_error "Docker 源配置失败。" "Failed to configure Docker repository."
                     sudo yum install -y docker-ce docker-ce-cli containerd.io || \
                         handle_error "Docker 安装失败。" "Failed to install Docker."
