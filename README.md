@@ -11,5 +11,5 @@
 
 ### 2.自动化配置titan_network L2节点
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/bitauto-network/BitAuto/main/titan_network/install.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/deploy_titan/deploy_titan_zh.sh)
 ```
