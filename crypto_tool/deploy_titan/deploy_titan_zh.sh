@@ -4,9 +4,6 @@
 LOG_FILE="$HOME/titan_install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-# 配置身份码
-IDENTITY_CODE="87FD8C76-B4EB-479A-86DD-0B93E8BB7B7A"
-
 # 支持的消息日志
 log_message() {
     echo "$1"
@@ -107,12 +104,36 @@ deploy_titan_node() {
 
 # 绑定身份码
 bind_identity() {
+    log_message "请输入您的绑定身份码："
+    read -p "绑定身份码: " IDENTITY_CODE
     log_message "正在绑定身份码..."
     if ! docker run --rm -it -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge bind --hash="$IDENTITY_CODE" \
         https://api-test1.container1.titannet.io/api/v2/device/binding; then
         return 1
     fi
     log_message "身份码绑定成功。"
+}
+
+# 升级提示及选择
+upgrade_titan_node() {
+    log_message "检测到新版本的 Titan 节点，是否需要升级？(y/n)"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        log_message "开始升级 Titan 节点..."
+        # 停止并移除旧容器
+        docker stop $(docker ps --filter "ancestor=nezha123/titan-edge" --format "{{.ID}}") || return 1
+        docker rm $(docker ps --filter "ancestor=nezha123/titan-edge" --format "{{.ID}}") || return 1
+        # 拉取新镜像并运行
+        if ! docker pull nezha123/titan-edge; then
+            return 1
+        fi
+        if ! docker run --network=host -d -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge; then
+            return 1
+        fi
+        log_message "Titan 节点升级完成。"
+    else
+        log_message "跳过 Titan 节点升级。"
+    fi
 }
 
 # 主函数
@@ -134,7 +155,11 @@ main() {
         handle_error "绑定身份码失败。"
         [ $? -eq 0 ] && break
     done
-    log_message "Titan 节点已成功部署。"
+    while ! upgrade_titan_node; do
+        handle_error "Titan 节点升级失败。"
+        [ $? -eq 0 ] && break
+    done
+    log_message "Titan 节点已成功部署或升级。"
 }
 
 # 调用主函数
