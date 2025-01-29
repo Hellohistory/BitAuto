@@ -4,24 +4,21 @@
 LOG_FILE="$HOME/titan_install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-# Configuration Identity Code
-IDENTITY_CODE="87FD8C76-B4EB-479A-86DD-0B93E8BB7B7A"
-
-# Supported log messages
+# Log message function
 log_message() {
     echo "$1"
 }
 
-# Error handling function, providing user options
+# Error handling function with user options
 handle_error() {
-    log_message "An error occurred: $1"
+    log_message "Error occurred: $1"
     log_message "1) Retry\n2) Skip\n3) Exit"
-    read -p "Please select an option (1/2/3): " choice
+    read -p "Enter your choice (1/2/3): " choice
     case "$choice" in
-        1) return 1 ;; # Return 1 to retry
-        2) return 0 ;; # Return 0 to skip
-        3) exit 1 ;; # Exit the script
-        *) log_message "Invalid input, exiting the script."
+        1) return 1 ;; # Retry
+        2) return 0 ;; # Skip
+        3) exit 1 ;; # Exit script
+        *) log_message "Invalid input, exiting script."
            exit 1 ;;
     esac
 }
@@ -57,7 +54,7 @@ install_docker() {
             sudo systemctl start docker || return 1
             sudo systemctl enable docker || return 1
         else
-            log_message "Unable to determine operating system type."
+            log_message "Could not determine operating system type."
             return 1
         fi
         log_message "Docker installation completed."
@@ -69,16 +66,16 @@ install_docker() {
 # Clean old node data
 clean_old_data() {
     if [ -d "$HOME/.titanedge" ]; then
-        log_message "Old node data detected, do you want to clean it? (y/n)"
+        log_message "Old node data detected. Do you want to clean it? (y/n)"
         read -r response
         if [[ "$response" =~ ^[Yy]$ ]]; then
             rm -rf "$HOME/.titanedge" || return 1
-            log_message "Old node data cleaned."
+            log_message "Old node data has been cleaned."
         else
             log_message "Skipping old node data cleanup."
         fi
     else
-        log_message "No old node data detected, skipping cleanup."
+        log_message "No old node data found, skipping cleanup."
     fi
 }
 
@@ -91,7 +88,7 @@ check_titan_status() {
     return 1
 }
 
-# Download Titan image and run the node
+# Download Titan image and deploy node
 deploy_titan_node() {
     check_titan_status && return
     mkdir -p "$HOME/.titanedge" || return 1
@@ -99,7 +96,7 @@ deploy_titan_node() {
     if ! docker pull nezha123/titan-edge; then
         return 1
     fi
-    log_message "Running Titan node..."
+    log_message "Starting Titan node..."
     if ! docker run --network=host -d -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge; then
         return 1
     fi
@@ -107,12 +104,38 @@ deploy_titan_node() {
 
 # Bind identity code
 bind_identity() {
+    log_message "Please enter your binding identity code:"
+    read -p "Identity code: " IDENTITY_CODE
     log_message "Binding identity code..."
-    if ! docker run --rm -it -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge bind --hash="$IDENTITY_CODE" \
-        https://api-test1.container1.titannet.io/api/v2/device/binding; then
+    if ! docker run --rm -it \
+         -v "$HOME/.titanedge:/root/.titanedge" \
+         nezha123/titan-edge \
+         bind --hash="$IDENTITY_CODE" https://api-test1.container1.titannet.io/api/v2/device/binding; then
         return 1
     fi
     log_message "Identity code binding successful."
+}
+
+# Upgrade Titan node
+upgrade_titan_node() {
+    log_message "A new version of Titan node is available. Do you want to upgrade? (y/n)"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        log_message "Upgrading Titan node..."
+        # Stop and remove old container
+        docker stop $(docker ps --filter "ancestor=nezha123/titan-edge" --format "{{.ID}}") || return 1
+        docker rm $(docker ps --filter "ancestor=nezha123/titan-edge" --format "{{.ID}}") || return 1
+        # Pull new image and restart
+        if ! docker pull nezha123/titan-edge; then
+            return 1
+        fi
+        if ! docker run --network=host -d -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge; then
+            return 1
+        fi
+        log_message "Titan node upgrade completed."
+    else
+        log_message "Skipping Titan node upgrade."
+    fi
 }
 
 # Main function
@@ -123,7 +146,7 @@ main() {
         [ $? -eq 0 ] && break
     done
     while ! clean_old_data; do
-        handle_error "Old data cleanup failed."
+        handle_error "Failed to clean old data."
         [ $? -eq 0 ] && break
     done
     while ! deploy_titan_node; do
@@ -134,8 +157,12 @@ main() {
         handle_error "Identity code binding failed."
         [ $? -eq 0 ] && break
     done
-    log_message "Titan node deployed successfully."
+    while ! upgrade_titan_node; do
+        handle_error "Titan node upgrade failed."
+        [ $? -eq 0 ] && break
+    done
+    log_message "Titan node successfully deployed or upgraded."
 }
 
-# Call main function
+# Execute main function
 main

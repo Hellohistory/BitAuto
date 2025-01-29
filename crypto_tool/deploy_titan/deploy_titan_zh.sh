@@ -107,8 +107,10 @@ bind_identity() {
     log_message "请输入您的绑定身份码："
     read -p "绑定身份码: " IDENTITY_CODE
     log_message "正在绑定身份码..."
-    if ! docker run --rm -it -v "$HOME/.titanedge:/root/.titanedge" nezha123/titan-edge bind --hash="$IDENTITY_CODE" \
-        https://api-test1.container1.titannet.io/api/v2/device/binding; then
+    if ! docker run --rm -it \
+         -v "$HOME/.titanedge:/root/.titanedge" \
+         nezha123/titan-edge \
+         bind --hash="$IDENTITY_CODE" https://api-test1.container1.titannet.io/api/v2/device/binding; then
         return 1
     fi
     log_message "身份码绑定成功。"
