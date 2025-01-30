@@ -5,11 +5,20 @@
 ### 1.自动化安装docker
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/deploy_titan/deploy_titan_zh.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/development_tool/autoinstall_docker/autoinstall_docker_zh.sh)
 ```
 
 
-### 2.自动化配置titan_network L2节点
+### 2.自动化配置titan_network L2节点(使用docker，需要先安装docker)
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/deploy_titan/deploy_titan_zh.sh)
 ```
+### 3.自动化配置Mysql
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/development_tool/autoinstll_mysql/autoyinstall_mysql_zh.sh)
+```
+### 4.Neovim IDE 环境安装
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/development_tool/install_vim_ide.sh)
+```
+

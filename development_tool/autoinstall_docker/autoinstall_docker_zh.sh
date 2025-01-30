@@ -38,27 +38,13 @@ add_docker_gpg() {
     curl -fsSL https://download.docker.com/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 }
 
-# 配置官方源（适用于 Debian/Ubuntu）
-set_official_mirror() {
-    echo "尝试使用官方源..."
+# 配置 Docker 镜像源
+set_mirror() {
+    local mirror_url=$1
+    echo "尝试使用镜像源: $mirror_url"
+    curl -fsSL "$mirror_url/gpg" | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$OS_NAME $(lsb_release -cs) stable"
-}
-
-# 配置阿里云源（适用于 Debian/Ubuntu）
-set_aliyun_mirror() {
-    echo "尝试使用阿里云源..."
-    curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] http://mirrors.aliyun.com/docker-ce/linux/$OS_NAME $(lsb_release -cs) stable"
-}
-
-# 配置清华源（适用于 Debian/Ubuntu）
-set_tsinghua_mirror() {
-    echo "尝试使用清华源..."
-    curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/$OS_NAME $(lsb_release -cs) stable"
+        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] $mirror_url/linux/$OS_NAME $(lsb_release -cs) stable"
 }
 
 # 安装 Docker
@@ -193,32 +179,22 @@ if docker_exists; then
     esac
 fi
 
-# 安装 Docker
-if [[ "$OS_NAME" == "ubuntu" || "$OS_NAME" == "debian" ]]; then
-    add_docker_gpg
+# 添加 Docker GPG 密钥并设置源
+add_docker_gpg
 
-    # 尝试官方源
-    set_official_mirror
+# 尝试多个镜像源安装 Docker
+set_mirror "https://download.docker.com"
+sudo apt update
+if ! install_docker; then
+    echo "官方源安装失败，切换到阿里云源..."
+    set_mirror "http://mirrors.aliyun.com"
     sudo apt update
-    if install_docker; then
-        :
-    else
-        # 尝试阿里云源
-        echo "官方源安装失败，切换到阿里云源..."
-        set_aliyun_mirror
+    if ! install_docker; then
+        echo "阿里云源安装失败，切换到清华源..."
+        set_mirror "https://mirrors.tuna.tsinghua.edu.cn"
         sudo apt update
-        if install_docker; then
-            :
-        else
-            # 尝试清华源
-            echo "阿里云源安装失败，切换到清华源..."
-            set_tsinghua_mirror
-            sudo apt update
-            install_docker || exit 1
-        fi
+        install_docker || exit 1
     fi
-else
-    install_docker || exit 1
 fi
 
 # 安装后配置
