@@ -13,6 +13,15 @@ OS_NAME=$(grep '^ID=' /etc/os-release | awk -F '=' '{print $2}' | tr -d '"')
 # shellcheck disable=SC2034
 OS_VERSION=$(grep '^VERSION_ID=' /etc/os-release | awk -F '=' '{print $2}' | tr -d '"')
 
+# 检查 Docker 是否已存在
+docker_exists() {
+    if command -v docker &>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 # 卸载已有的 Docker
 uninstall_docker() {
     echo "正在卸载已有的 Docker..."
@@ -61,7 +70,7 @@ install_docker() {
             if sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
                 echo "Docker 安装成功！"
                 docker --version
-                exit 0
+                return 0
             fi
             ;;
         centos | rocky | rhel)
@@ -70,7 +79,7 @@ install_docker() {
             if sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
                 echo "Docker 安装成功！"
                 docker --version
-                exit 0
+                return 0
             fi
             ;;
         fedora)
@@ -79,24 +88,24 @@ install_docker() {
             if sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
                 echo "Docker 安装成功！"
                 docker --version
-                exit 0
+                return 0
             fi
             ;;
         arch)
             sudo pacman -Syu --noconfirm docker docker-compose
             echo "Docker 安装成功！"
             docker --version
-            exit 0
+            return 0
             ;;
         opensuse)
             sudo zypper install -y docker docker-compose
             echo "Docker 安装成功！"
             docker --version
-            exit 0
+            return 0
             ;;
         *)
             echo "不支持的操作系统: $OS_NAME"
-            exit 1
+            return 1
             ;;
     esac
 
@@ -104,38 +113,125 @@ install_docker() {
     return 1
 }
 
-# === 主逻辑 ===
-uninstall_docker
+# 配置 Docker 镜像加速器
+configure_docker_proxy() {
+    echo "请输入 Docker 镜像加速器地址（例如：https://registry.example.com），按 Enter 跳过："
+    read proxy_url
+    if [[ -z "$proxy_url" ]]; then
+        echo "跳过代理配置。"
+        return 0
+    fi
 
-# 适用于 Debian/Ubuntu 的 GPG 设置
+    # 检查 jq 工具
+    if ! command -v jq &>/dev/null; then
+        echo "正在安装 jq 工具..."
+        if ! (sudo apt install -y jq 2>/dev/null || sudo yum install -y jq 2>/dev/null || sudo dnf install -y jq 2>/dev/null || sudo pacman -S --noconfirm jq 2>/dev/null || sudo zypper install -y jq 2>/dev/null); then
+            echo "无法自动安装 jq，请手动安装后重试。"
+            return 1
+        fi
+    fi
+
+    # 处理配置文件
+    config_file="/etc/docker/daemon.json"
+    tmp_file=$(mktemp)
+
+    if [ -f "$config_file" ]; then
+        # 合并现有配置
+        jq --arg url "$proxy_url" '."registry-mirrors" = [$url]' "$config_file" > "$tmp_file"
+    else
+        # 创建新配置
+        echo "{\"registry-mirrors\": [\"$proxy_url\"]}" | jq . > "$tmp_file"
+    fi
+
+    # 应用配置
+    sudo mv "$tmp_file" "$config_file"
+    sudo chmod 600 "$config_file"
+
+    echo "重启 Docker 服务..."
+    sudo systemctl restart docker
+
+    # 自检配置
+    echo "正在验证配置..."
+    if sudo docker info 2>/dev/null | grep -q "$proxy_url"; then
+        echo "✅ 代理配置验证成功！"
+    else
+        echo "❌ 代理配置可能未生效，请检查以下内容："
+        echo "1. 确保输入的镜像地址正确"
+        echo "2. 手动运行 'sudo docker info' 检查 Registry Mirrors"
+        echo "3. 检查文件 /etc/docker/daemon.json 的权限和内容"
+    fi
+}
+
+# === 主逻辑 ===
+
+# 检查现有 Docker 安装
+if docker_exists; then
+    read -p "检测到系统已安装 Docker，是否卸载并重新安装？(Y/n) " choice
+    choice=${choice:-Y}
+    case "$choice" in
+        Y|y )
+            uninstall_docker
+            ;;
+        N|n )
+            read -p "是否要配置 Docker 镜像加速器？(Y/n) " proxy_choice
+            proxy_choice=${proxy_choice:-Y}
+            case "$proxy_choice" in
+                Y|y )
+                    configure_docker_proxy
+                    exit 0
+                    ;;
+                * )
+                    echo "跳过代理配置。"
+                    exit 0
+                    ;;
+            esac
+            ;;
+        * )
+            echo "无效输入，退出脚本。"
+            exit 1
+            ;;
+    esac
+fi
+
+# 安装 Docker
 if [[ "$OS_NAME" == "ubuntu" || "$OS_NAME" == "debian" ]]; then
     add_docker_gpg
 
-    # 先尝试官方源
+    # 尝试官方源
     set_official_mirror
     sudo apt update
     if install_docker; then
-        exit 0
-    fi
-
-    # 官方源失败，尝试阿里云源
-    echo "官方源安装失败，切换到阿里云源..."
-    set_aliyun_mirror
-    sudo apt update
-    if install_docker; then
-        exit 0
-    fi
-
-    # 阿里云源失败，尝试清华源
-    echo "阿里云源安装失败，切换到清华源..."
-    set_tsinghua_mirror
-    sudo apt update
-    if install_docker; then
-        exit 0
+        :
+    else
+        # 尝试阿里云源
+        echo "官方源安装失败，切换到阿里云源..."
+        set_aliyun_mirror
+        sudo apt update
+        if install_docker; then
+            :
+        else
+            # 尝试清华源
+            echo "阿里云源安装失败，切换到清华源..."
+            set_tsinghua_mirror
+            sudo apt update
+            install_docker || exit 1
+        fi
     fi
 else
-    install_docker
+    install_docker || exit 1
 fi
 
-echo "Docker 安装失败，请检查网络连接或手动尝试其他安装方式。"
-exit 1
+# 安装后配置
+read -p "是否要配置 Docker 镜像加速器？(Y/n) " post_install_choice
+post_install_choice=${post_install_choice:-Y}
+case "$post_install_choice" in
+    Y|y )
+        configure_docker_proxy
+        ;;
+    * )
+        echo "跳过代理配置。"
+        ;;
+esac
+
+echo "脚本执行完成。"
+exit 0
