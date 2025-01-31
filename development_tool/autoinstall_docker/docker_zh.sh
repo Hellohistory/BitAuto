@@ -98,6 +98,9 @@ configure_docker_proxy() {
         fi
     fi
 
+    # 确保 /etc/docker 目录存在
+    sudo mkdir -p /etc/docker
+
     # 处理配置文件
     config_file="/etc/docker/daemon.json"
     tmp_file=$(mktemp)
@@ -107,6 +110,9 @@ configure_docker_proxy() {
     else
         echo "{\"registry-mirrors\": [\"$proxy_url\"]}" | jq . > "$tmp_file"
     fi
+
+    # 确保目标文件存在
+    sudo touch "$config_file"
 
     # 应用配置
     sudo mv "$tmp_file" "$config_file"
