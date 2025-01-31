@@ -1,140 +1,73 @@
 #!/bin/bash
 
-# Ensure the script is run as root
+# 检查是否以root用户或具有sudo权限执行
 if [ "$(id -u)" != "0" ]; then
-    echo "Please run this script as root or use sudo."
+    echo "请以root用户或使用sudo运行该脚本。"
     exit 1
 fi
 
-echo "Starting Docker installation script..."
+echo "Docker安装脚本开始..."
 
-# Detect OS information
-OS_NAME=$(grep '^ID=' /etc/os-release | awk -F '=' '{print $2}' | tr -d '"')
-OS_VERSION=$(grep '^VERSION_ID=' /etc/os-release | awk -F '=' '{print $2}' | tr -d '"')
+# 1. 卸载已存在的Docker
+echo "正在卸载已有的Docker..."
+sudo apt remove -y docker-desktop
+rm -r $HOME/.docker/desktop 2>/dev/null || echo "无残余目录需要清理。"
+sudo rm /usr/local/bin/com.docker.cli 2>/dev/null || echo "无残余文件需要清理。"
+sudo apt purge -y docker-desktop
 
-# Function to uninstall existing Docker
-uninstall_docker() {
-    echo "Removing any existing Docker installation..."
-    sudo apt remove -y docker-desktop docker-ce docker-ce-cli containerd.io docker-compose-plugin 2>/dev/null || true
-    sudo yum remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin 2>/dev/null || true
-    sudo dnf remove -y docker-ce docker-ce-cli containerd.io docker-compose-plugin 2>/dev/null || true
-    sudo pacman -Rns --noconfirm docker docker-compose 2>/dev/null || true
-    sudo zypper remove -y docker docker-compose 2>/dev/null || true
-}
+# 更新软件包索引
+echo "更新软件包索引..."
+sudo apt update
 
-# Function to add Docker's official GPG key (for Debian/Ubuntu)
-add_docker_gpg() {
-    echo "Adding Docker's official GPG key..."
-    curl -fsSL https://download.docker.com/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-}
+# 2. 添加Docker官方源
+echo "尝试添加Docker官方源..."
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-# Function to configure the official Docker repository (for Debian/Ubuntu)
-set_official_mirror() {
-    echo "Trying to use the official Docker repository..."
-    sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$OS_NAME $(lsb_release -cs) stable"
-}
-
-# Function to configure Aliyun's mirror (for Debian/Ubuntu)
-set_aliyun_mirror() {
-    echo "Trying to use Aliyun mirror..."
-    curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] http://mirrors.aliyun.com/docker-ce/linux/$OS_NAME $(lsb_release -cs) stable"
-}
-
-# Function to configure Tsinghua's mirror (for Debian/Ubuntu)
-set_tsinghua_mirror() {
-    echo "Trying to use Tsinghua mirror..."
-    curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/$OS_NAME/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    sudo add-apt-repository \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/$OS_NAME $(lsb_release -cs) stable"
-}
-
-# Function to install Docker
-install_docker() {
-    echo "Attempting to install Docker..."
-    case "$OS_NAME" in
-        ubuntu | debian)
-            sudo apt update
-            if sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
-                echo "Docker installation successful!"
-                docker --version
-                exit 0
-            fi
-            ;;
-        centos | rocky | rhel)
-            sudo yum install -y yum-utils
-            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-            if sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
-                echo "Docker installation successful!"
-                docker --version
-                exit 0
-            fi
-            ;;
-        fedora)
-            sudo dnf install -y dnf-plugins-core
-            sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-            if sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin; then
-                echo "Docker installation successful!"
-                docker --version
-                exit 0
-            fi
-            ;;
-        arch)
-            sudo pacman -Syu --noconfirm docker docker-compose
-            echo "Docker installation successful!"
-            docker --version
-            exit 0
-            ;;
-        opensuse)
-            sudo zypper install -y docker docker-compose
-            echo "Docker installation successful!"
-            docker --version
-            exit 0
-            ;;
-        *)
-            echo "Unsupported operating system: $OS_NAME"
-            exit 1
-            ;;
-    esac
-
-    echo "Docker installation failed!"
-    return 1
-}
-
-# === Main Logic ===
-uninstall_docker
-
-# If OS is Debian or Ubuntu, handle repository configuration
-if [[ "$OS_NAME" == "ubuntu" || "$OS_NAME" == "debian" ]]; then
-    add_docker_gpg
-
-    # Try the official repository first
-    set_official_mirror
-    sudo apt update
-    if install_docker; then
-        exit 0
-    fi
-
-    # If the official repository fails, try Aliyun
-    echo "Official repository installation failed, switching to Aliyun mirror..."
-    set_aliyun_mirror
-    sudo apt update
-    if install_docker; then
-        exit 0
-    fi
-
-    # If Aliyun fails, try Tsinghua
-    echo "Aliyun mirror installation failed, switching to Tsinghua mirror..."
-    set_tsinghua_mirror
-    sudo apt update
-    if install_docker; then
-        exit 0
-    fi
+# 3. 安装Docker
+echo "尝试安装Docker (官方源)..."
+sudo apt update
+if sudo apt install -y docker-ce; then
+    echo "Docker安装成功！(官方源)"
+    docker --version
+    exit 0
 else
-    install_docker
+    echo "Docker安装失败！尝试切换到国内源..."
 fi
 
-echo "Docker installation failed. Please check your network connection or try a manual installation."
-exit 1
+# 切换到国内源
+echo "选择国内镜像源:"
+echo "1) 阿里源"
+echo "2) 清华源"
+read -p "输入选项 (1/2): " source_choice
+
+if [ "$source_choice" == "1" ]; then
+    echo "切换到阿里源..."
+    curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository \
+        "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
+elif [ "$source_choice" == "2" ]; then
+    echo "切换到清华源..."
+    curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository \
+        "deb [arch=amd64] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
+else
+    echo "无效选项，脚本退出。"
+    exit 1
+fi
+
+# 重新更新软件包索引
+echo "更新软件包索引..."
+sudo apt update
+
+# 尝试再次安装Docker
+echo "尝试安装Docker (国内源)..."
+if sudo apt install -y docker-ce; then
+    echo "Docker安装成功！(国内源)"
+    docker --version
+    exit 0
+else
+    echo "Docker安装失败，请检查错误日志。"
+    exit 1
+fi
