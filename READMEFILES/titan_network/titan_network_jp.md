@@ -41,7 +41,7 @@ Titan は現在 **第 4 フェーズのテストネット「ガリレオ・テ�
 
 ### **🔹 GitHub ホスト版**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/titan_network/testnet_cassini_3_jp.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_cassini_3_jp.sh)
 ```
 
 ---
@@ -50,5 +50,5 @@ bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/hea
 
 ### **🔹 GitHub ホスト版**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/titan_network/testnet_galileo_4_jp.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_galileo_4_jp.sh)
 ```
