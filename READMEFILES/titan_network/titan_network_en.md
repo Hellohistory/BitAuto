@@ -41,7 +41,7 @@ We have updated the **Titan node auto-deployment script for Linux**, making it e
 
 ### **🔹 GitHub Hosted Version**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_cassini_3_en.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_cassini_3/testnet_cassini_3_en.sh)
 ```
 
 ---
@@ -50,5 +50,5 @@ bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/hea
 
 ### **🔹 GitHub Hosted Version**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_galileo_4_en.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto/titan_network/testnet_galileo_4/testnet_galileo_4_en.sh)
 ```
