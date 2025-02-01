@@ -1,145 +1,149 @@
 #!/bin/bash
 
-# rootユーザーまたはsudo権限で実行されているか確認
+# root ユーザーまたは sudo 権限で実行しているか確認
 if [ "$(id -u)" != "0" ]; then
-    echo "このスクリプトをrootユーザーとして、またはsudoを使用して実行してください。"
+    echo "root ユーザーまたは sudo を使用してスクリプトを実行してください。"
     exit 1
 fi
 
-echo "🚀 Docker インストールスクリプトを開始します..."
+echo "🚀 Docker インストールスクリプト開始..."
 
-# Dockerが既にインストールされているか確認
+# Docker がインストールされているか確認
 if command -v docker &>/dev/null; then
-    echo "Docker がインストールされています：$(docker --version)"
-    read -p "現在のDockerをアンインストールしますか？(y/N): " remove_docker
+    echo "Docker が既にインストールされています：$(docker --version)"
+    read -p "現在の Docker をアンインストールしますか？(y/N): " remove_docker
     if [[ "$remove_docker" =~ ^[Yy]$ ]]; then
-        echo "🛠 Dockerをアンインストール中..."
+        echo "🛠 Docker をアンインストール中..."
         sudo apt remove -y docker-desktop
-        rm -r $HOME/.docker/desktop 2>/dev/null || echo "残りのディレクトリはありません。"
-        sudo rm /usr/local/bin/com.docker.cli 2>/dev/null || echo "残りのファイルはありません。"
+        rm -r $HOME/.docker/desktop 2>/dev/null || echo "不要なフォルダはありません。"
+        sudo rm /usr/local/bin/com.docker.cli 2>/dev/null || echo "不要なファイルはありません。"
         sudo apt purge -y docker-desktop docker-ce docker-ce-cli containerd.io
         sudo rm -rf /var/lib/docker /etc/docker
-        echo "✅ Dockerがアンインストールされました。"
+        echo "✅ Docker はアンインストールされました。"
     else
-        echo "⏭ アンインストール手順をスキップします。"
+        echo "⏭ アンインストールをスキップします。"
     fi
 fi
 
-# パッケージインデックスを更新
-echo "🔄 パッケージインデックスを更新中..."
+# パッケージリストを更新
+echo "🔄 パッケージリストを更新中..."
 sudo apt update
 
-# Docker公式リポジトリを追加
-echo "🌍 Docker公式リポジトリを追加中..."
+# Docker の公式リポジトリを追加
+echo "🌍 Docker の公式リポジトリを追加..."
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository \
     "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-# Dockerをインストール（公式リポジトリ）
-echo "⚙️  Dockerをインストール中（公式リポジトリ）..."
+# Docker のインストールを試行 (公式リポジトリ)
+echo "⚙️  Docker をインストール中 (公式リポジトリ)..."
 sudo apt update
 if sudo apt install -y docker-ce docker-ce-cli containerd.io; then
-    echo "✅ Dockerのインストールに成功しました！（公式リポジトリ）"
+    echo "✅ Docker のインストールに成功しました！(公式リポジトリ)"
     docker --version
 else
-    echo "❌ 公式リポジトリからのインストールに失敗しました。国内リポジトリに切り替えます..."
+    echo "❌ 公式リポジトリでのインストールに失敗！国内ミラーを試します..."
 
-    # 国内ミラーリポジトリを選択
-    echo "国内ミラーリポジトリを選択してください："
-    echo "1) アリミラー"
-    echo "2) 清華ミラー"
-    read -p "オプションを入力してください（1/2）： " source_choice
+    # 国内ミラーの選択
+    echo "国内ミラーを選択してください:"
+    echo "1) アリババクラウド (Aliyun)"
+    echo "2) 清華大学 (TUNA)"
+    read -p "選択 (1/2): " source_choice
 
     if [ "$source_choice" == "1" ]; then
-        echo "🔄 アリミラーに切り替え中..."
+        echo "🔄 アリババクラウドミラーを使用します..."
         curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository \
             "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
     elif [ "$source_choice" == "2" ]; then
-        echo "🔄 清華ミラーに切り替え中..."
+        echo "🔄 清華大学ミラーを使用します..."
         curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository \
             "deb [arch=amd64] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
     else
-        echo "❌ 無効なオプションです。スクリプトを終了します。"
+        echo "❌ 無効な選択です。スクリプトを終了します。"
         exit 1
     fi
 
-    # パッケージインデックスを再更新
-    echo "🔄 パッケージインデックスを更新中..."
+    # 再度パッケージリストを更新
+    echo "🔄 パッケージリストを更新中..."
     sudo apt update
 
-    # 再度Dockerをインストール
-    echo "⚙️  Dockerをインストール中（国内リポジトリ）..."
+    # Docker の再インストール
+    echo "⚙️  Docker をインストール中 (国内ミラー)..."
     if sudo apt install -y docker-ce docker-ce-cli containerd.io; then
-        echo "✅ Dockerのインストールに成功しました！（国内リポジトリ）"
+        echo "✅ Docker のインストールに成功しました！(国内ミラー)"
         docker --version
     else
-        echo "❌ Dockerのインストールに失敗しました。エラーログを確認してください。"
+        echo "❌ Docker のインストールに失敗しました。エラーログを確認してください。"
         exit 1
     fi
 fi
 
-# Dockerイメージアクセラレーターを設定
 configure_docker_proxy() {
-    echo "🌍 DockerのイメージアクセラレーターのURLを入力してください（例：https://registry.docker-cn.com）。スキップするにはEnterを押してください："
-    read proxy_url
-    if [[ -z "$proxy_url" ]]; then
-        echo "⏭ プロキシ設定をスキップします。"
+    echo "🌍 Docker ミラーアクセラレーターの URL を入力してください（複数入力可、スペース区切り 例: https://registry.docker-cn.com https://mirror.ccs.tencentyun.com）。Enter を押すとスキップします: "
+    read -r proxy_urls
+    if [[ -z "$proxy_urls" ]]; then
+        echo "⏭ ミラー設定をスキップします。"
         return 0
     fi
 
-    # jqツールがインストールされているか確認
+    # jq コマンドの確認
     if ! command -v jq &>/dev/null; then
-        echo "🛠 jqツールをインストール中..."
+        echo "🛠 jq をインストール中..."
         if ! (sudo apt install -y jq 2>/dev/null || sudo yum install -y jq 2>/dev/null || sudo dnf install -y jq 2>/dev/null || sudo pacman -S --noconfirm jq 2>/dev/null || sudo zypper install -y jq 2>/dev/null); then
-            echo "❌ jqを自動的にインストールできません。手動でインストールしてから再試行してください。"
+            echo "❌ jq のインストールに失敗しました。手動でインストールしてください。"
             return 1
         fi
     fi
 
-    # /etc/dockerディレクトリが存在することを確認
+    # /etc/docker ディレクトリを作成
     sudo mkdir -p /etc/docker
 
-    # 設定ファイルを処理
+    # 設定ファイルの処理
     config_file="/etc/docker/daemon.json"
     tmp_file=$(mktemp)
 
+    # 入力されたプロキシ URL を JSON 配列に変換
+    registry_mirrors=()
+    for url in $proxy_urls; do
+        registry_mirrors+=("\"$url\"")
+    done
+    mirrors_json="[${registry_mirrors[*]}]"
+
+    # daemon.json を更新または作成
     if [ -f "$config_file" ]; then
-        jq --arg url "$proxy_url" '."registry-mirrors" = [$url]' "$config_file" > "$tmp_file"
+        jq --argjson mirrors "$mirrors_json" '."registry-mirrors" = $mirrors' "$config_file" > "$tmp_file"
     else
-        echo "{\"registry-mirrors\": [\"$proxy_url\"]}" | jq . > "$tmp_file"
+        echo "{\"registry-mirrors\": $mirrors_json}" | jq . > "$tmp_file"
     fi
 
-    # 目標ファイルが存在することを確認
-    sudo touch "$config_file"
-
-    # 設定を適用
+    # ファイルを適用
     sudo mv "$tmp_file" "$config_file"
     sudo chmod 600 "$config_file"
 
-    echo "🔄 Dockerサービスを再起動中..."
+    echo "🔄 Docker サービスを再起動中..."
     sudo systemctl restart docker
 
-    # 設定を検証
-    echo "✅ 設定を検証中..."
-    if sudo docker info 2>/dev/null | grep -q "$proxy_url"; then
-        echo "✅ プロキシ設定の検証に成功しました！"
+    # 設定を確認
+    echo "✅ 設定を確認中..."
+    if sudo docker info 2>/dev/null | grep -q "$(echo "$proxy_urls" | awk '{print $1}')"; then
+        echo "✅ ミラー設定が適用されました！"
     else
-        echo "❌ プロキシ設定が有効でない可能性があります。以下を確認してください："
-        echo "1. 入力したイメージURLが正しいことを確認してください。"
-        echo "2. 'sudo docker info'を手動で実行してRegistry Mirrorsを確認してください。"
-        echo "3. /etc/docker/daemon.jsonファイルの権限と内容を確認してください。"
+        echo "❌ ミラー設定が適用されていない可能性があります。以下を確認してください:"
+        echo "1. 入力したミラー URL が正しいか確認"
+        echo "2. 'sudo docker info' を実行して Registry Mirrors を確認"
+        echo "3. /etc/docker/daemon.json の内容と権限を確認"
     fi
 }
 
-# ユーザーにDockerイメージアクセラレーターの設定を促す
-read -p "Dockerのイメージアクセラレーターを設定しますか？(y/N): " configure_proxy
+# ミラーアクセラレーターを設定するか確認
+read -p "Docker ミラーアクセラレーターを設定しますか？(y/N): " configure_proxy
 if [[ "$configure_proxy" =~ ^[Yy]$ ]]; then
     configure_docker_proxy
 else
-    echo "⏭ イメージアクセラレーターの設定をスキップします。"
+    echo "⏭ ミラー設定をスキップします。"
 fi
 
-echo "🎉 Dockerのインストールと設定が完了しました！"
+echo "🎉 Docker のインストールと設定が完了しました！"
 exit 0

@@ -80,11 +80,10 @@ else
     fi
 fi
 
-# 配置 Docker 镜像加速器
 configure_docker_proxy() {
-    echo "🌍 请输入 Docker 镜像加速器地址（例如：https://registry.docker-cn.com），按 Enter 跳过："
-    read proxy_url
-    if [[ -z "$proxy_url" ]]; then
+    echo "🌍 请输入 Docker 镜像加速器地址（多个地址请用空格隔开，例如：https://registry.docker-cn.com https://mirror.ccs.tencentyun.com），按 Enter 跳过："
+    read -r proxy_urls
+    if [[ -z "$proxy_urls" ]]; then
         echo "⏭ 跳过代理配置。"
         return 0
     fi
@@ -105,10 +104,18 @@ configure_docker_proxy() {
     config_file="/etc/docker/daemon.json"
     tmp_file=$(mktemp)
 
+    # 解析输入的代理地址，转换为 JSON 数组格式
+    registry_mirrors=()
+    for url in $proxy_urls; do
+        registry_mirrors+=("\"$url\"")
+    done
+    mirrors_json="[${registry_mirrors[*]}]"
+
+    # 更新或创建 daemon.json
     if [ -f "$config_file" ]; then
-        jq --arg url "$proxy_url" '."registry-mirrors" = [$url]' "$config_file" > "$tmp_file"
+        jq --argjson mirrors "$mirrors_json" '."registry-mirrors" = $mirrors' "$config_file" > "$tmp_file"
     else
-        echo "{\"registry-mirrors\": [\"$proxy_url\"]}" | jq . > "$tmp_file"
+        echo "{\"registry-mirrors\": $mirrors_json}" | jq . > "$tmp_file"
     fi
 
     # 确保目标文件存在
@@ -123,7 +130,7 @@ configure_docker_proxy() {
 
     # 自检配置
     echo "✅ 正在验证配置..."
-    if sudo docker info 2>/dev/null | grep -q "$proxy_url"; then
+    if sudo docker info 2>/dev/null | grep -q "$(echo "$proxy_urls" | awk '{print $1}')"; then
         echo "✅ 代理配置验证成功！"
     else
         echo "❌ 代理配置可能未生效，请检查以下内容："
