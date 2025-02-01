@@ -41,12 +41,12 @@ Titan 现已开启 **第四期测试网 —— 伽利略测试网**，**第三�
 
 ### **🔹 GitHub 托管版本**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/titan_network/titan_network_3_zh.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/titan_network/testnet_cassini_3_zh.sh)
 ```
 
 ### **🚀 国内 Gitee 加速版**
 ```bash
-bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/crypto_tool/titan_network/titan_network_3_zh.sh)
+bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/crypto_tool/titan_network/testnet_cassini_3_zh.sh)
 ```
 
 ---
@@ -55,10 +55,10 @@ bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/crypto_tool/tit
 
 ### **🔹 GitHub 托管版本**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/crypto_tool/titan_network/titan_network_4_zh.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/maincrypto_tool/titan_network/testnet_galileo_4_zh.sh)
 ```
 
 ### **🚀 国内 Gitee 加速版**
 ```bash
-bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/crypto_tool/titan_network/titan_network_4_zh.sh)
+bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/crypto_tool/titan_network/testnet_galileo_4_zh.sh)
 ```
