@@ -148,5 +148,18 @@ else
     echo "⏭ 跳过镜像加速器配置。"
 fi
 
+# 询问用户是否设置 Docker 开机自启
+read -p "是否设置 Docker 开机自启？(y/N): " autostart_choice
+if [[ "$autostart_choice" =~ ^[Yy]$ ]]; then
+    echo "🚀 正在设置 Docker 开机自启..."
+    if sudo systemctl enable docker; then
+        echo "✅ Docker 已设置为开机自启！"
+    else
+        echo "❌ 设置 Docker 开机自启失败，请检查错误日志。"
+    fi
+else
+    echo "⏭ 跳过 Docker 开机自启设置。"
+fi
+
 echo "🎉 Docker 安装与配置完成！"
 exit 0

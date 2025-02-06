@@ -5,7 +5,7 @@
 ### 1.自动化安装docker
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/development_tool/autoinstall_docker/docker_zh.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/docker/install_docker/docker_zh.sh)
 ```
 
 
