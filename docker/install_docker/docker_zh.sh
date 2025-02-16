@@ -161,5 +161,15 @@ else
     echo "⏭ 跳过 Docker 开机自启设置。"
 fi
 
+# 询问用户是否安装 Docker 监控面板 dpanel
+read -p "是否安装 Docker 监控面板 dpanel？(y/N): " install_dpanel
+if [[ "$install_dpanel" =~ ^[Yy]$ ]]; then
+    echo "🛠 正在安装 Docker 监控面板..."
+    curl -sSL https://dpanel.cc/quick.sh -o quick.sh && sudo bash quick.sh
+    echo "✅ Docker 监控面板安装完成！"
+else
+    echo "⏭ 跳过 Docker 监控面板安装。"
+fi
+
 echo "🎉 Docker 安装与配置完成！"
 exit 0

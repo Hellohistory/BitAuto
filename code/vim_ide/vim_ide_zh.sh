@@ -1,18 +1,6 @@
 #!/bin/bash
 
-#========================================================
-# Neovim IDE 环境安装/配置脚本（Linux/Darwin, 交互式版）
-#========================================================
-# 主要功能：
-# 1. 交互式询问是否执行系统升级、是否备份旧配置等
-# 2. 自动安装/升级 Neovim、Node.js、Python3、Pyright 等依赖
-# 3. 使用 vim-plug 管理插件，自动安装常用插件
-# 4. 基于 Coc.nvim 的智能补全环境（示例配置 Pyright）
-#========================================================
 
-#-----------------------------
-#         全局变量区
-#-----------------------------
 LOG_FILE="/tmp/nvim_install.log"
 GREEN="\033[0;32m"
 RED="\033[0;31m"
@@ -22,13 +10,9 @@ NVIM_CONFIG_DIR="$HOME/.config/nvim"
 INIT_VIM="$NVIM_CONFIG_DIR/init.vim"
 COC_SETTINGS="$NVIM_CONFIG_DIR/coc-settings.json"
 
-UPDATE_SYSTEM="n"   # 是否更新系统软件包
-BACKUP_OLD_INIT="n" # 是否备份旧的 Neovim 配置文件
-INSTALL_NODE="n"    # 是否自动安装/更新 Node.js 及 Pyright
-
-#-----------------------------
-#         函数定义区
-#-----------------------------
+UPDATE_SYSTEM="n"
+BACKUP_OLD_INIT="n"
+INSTALL_NODE="n"
 
 # 日志输出重定向
 prepare_logging() {

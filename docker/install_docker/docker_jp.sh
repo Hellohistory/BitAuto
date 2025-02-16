@@ -158,5 +158,16 @@ else
     echo "⏭ 自動起動設定をスキップ。"
 fi
 
+# ユーザーにDocker監視パネルdpanelをインストールするか確認
+read -p "Docker監視パネルdpanelをインストールしますか？(y/N): " install_dpanel
+if [[ "$install_dpanel" =~ ^[Yy]$ ]]; then
+    echo "🛠 Docker監視パネルをインストール中..."
+    curl -sSL https://dpanel.cc/quick.sh -o quick.sh && sudo bash quick.sh
+    echo "✅ Docker監視パネルのインストールが完了しました！"
+else
+    echo "⏭ Docker監視パネルのインストールをスキップします。"
+fi
+
+
 echo "🎉 Dockerのインストールと設定が完了しました！"
 exit 0
