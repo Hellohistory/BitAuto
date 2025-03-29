@@ -121,14 +121,14 @@ deploy_qinglong() {
         echo "🚀 开始拉取青龙镜像（尝试次数: $((retry_count+1))）..."
         if docker pull "$IMAGE_NAME"; then
             echo "✅ 青龙镜像拉取成功！"
-            # 若存在同名容器则先移除
+            # 如果已有同名容器，则先删除旧容器
             if [ "$(docker ps -a -q -f name="^${CONTAINER_NAME}$")" ]; then
-                echo "检测到已有名为 ${CONTAINER_NAME} 的容器，正在移除旧容器..."
+                echo "检测到已有名为 ${CONTAINER_NAME} 的容器，正在删除旧容器..."
                 docker rm -f "$CONTAINER_NAME"
             fi
             echo "正在启动青龙容器..."
             docker run -dit --name "$CONTAINER_NAME" -p "${EXPOSED_PORT}:${CONTAINER_PORT}" "$IMAGE_NAME"
-            # 获取公网IP（需确保curl已安装）
+            # 获取公网IP
             PUBLIC_IP=$(curl -s ifconfig.me)
             echo "✅ 青龙容器启动成功！"
             echo "青龙面板访问地址: http://${PUBLIC_IP}:${EXPOSED_PORT}"
