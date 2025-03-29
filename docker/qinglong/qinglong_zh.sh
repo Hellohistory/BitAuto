@@ -114,15 +114,24 @@ EOF
     echo "✅ Docker 代理配置完成并服务已重启"
 }
 
-# 拉取青龙镜像，并在失败时支持设置代理重新拉取
-pull_qinglong() {
+# 拉取镜像、自动启动青龙容器，并输出青龙面板访问地址
+deploy_qinglong() {
     local retry_count=0
     while [ $retry_count -lt $MAX_RETRY ]; do
         echo "🚀 开始拉取青龙镜像（尝试次数: $((retry_count+1))）..."
         if docker pull "$IMAGE_NAME"; then
             echo "✅ 青龙镜像拉取成功！"
-            echo "运行以下命令启动青龙容器："
-            echo "  docker run -dit --name $CONTAINER_NAME -p ${EXPOSED_PORT}:${CONTAINER_PORT} $IMAGE_NAME"
+            # 若存在同名容器则先移除
+            if [ "$(docker ps -a -q -f name="^${CONTAINER_NAME}$")" ]; then
+                echo "检测到已有名为 ${CONTAINER_NAME} 的容器，正在移除旧容器..."
+                docker rm -f "$CONTAINER_NAME"
+            fi
+            echo "正在启动青龙容器..."
+            docker run -dit --name "$CONTAINER_NAME" -p "${EXPOSED_PORT}:${CONTAINER_PORT}" "$IMAGE_NAME"
+            # 获取公网IP（需确保curl已安装）
+            PUBLIC_IP=$(curl -s ifconfig.me)
+            echo "✅ 青龙容器启动成功！"
+            echo "青龙面板访问地址: http://${PUBLIC_IP}:${EXPOSED_PORT}"
             return 0
         else
             echo "❌ 拉取镜像失败（尝试次数: $((retry_count+1))），可能是网络问题导致。"
@@ -161,7 +170,7 @@ main() {
     fi
 
     read_exposed_port
-    pull_qinglong
+    deploy_qinglong
 }
 
 main
