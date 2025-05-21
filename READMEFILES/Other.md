@@ -11,6 +11,7 @@ bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/server_i
 ```
 
 ### 安装`RustDsek-Serve`服务器中继
+### **🔹 GitHub 托管版本**
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/server/install_rustdesk/install_rustdesk_zh.sh)
 ```
