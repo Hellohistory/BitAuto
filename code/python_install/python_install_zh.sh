@@ -86,7 +86,7 @@ choose_versions_fzf() {
         done \
         | fzf --multi \
               --prompt="Python 版本选择 > " \
-              --marker='[*]' \
+              --marker='✓' \
               --header="空格选择，回车确认；已安装版本带 ✅" \
               --info=inline \
               --color=marker:yellow,prompt:green,header:cyan \
