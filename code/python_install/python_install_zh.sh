@@ -6,7 +6,10 @@ set -euo pipefail
 # -----------------------
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
-export PYENV_GITHUB_REPO="https://mirrors.tuna.tsinghua.edu.cn/git/pyenv.git"
+# 官方 GitHub 仓库地址
+export PYENV_GITHUB_REPO="https://github.com/pyenv/pyenv.git"
+# Gitee 镜像仓库地址（备用）
+export PYENV_GITEE_REPO="https://gitee.com/mirrors/pyenv.git"
 export PYTHON_BUILD_MIRROR_URL="https://mirrors.tuna.tsinghua.edu.cn/python"
 
 # -----------------------
@@ -24,11 +27,15 @@ install_dependencies() {
 # -----------------------
 # 确保 pyenv 已就绪
 # -----------------------
-ensure_pyenv() {
+en sure_pyenv() {
     if ! command -v pyenv &> /dev/null; then
         echo "🔧 未检测到 pyenv，开始安装 pyenv..."
         install_dependencies
-        git clone "$PYENV_GITHUB_REPO" "$PYENV_ROOT"
+        echo "🌐 尝试从 GitHub 克隆 pyenv..."
+        if ! git clone "$PYENV_GITHUB_REPO" "$PYENV_ROOT"; then
+            echo "⚠️ GitHub 克隆失败，尝试使用 Gitee 镜像..."
+            git clone "$PYENV_GITEE_REPO" "$PYENV_ROOT"
+        fi
         cat <<'EOF' >> ~/.bashrc
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
@@ -45,7 +52,13 @@ EOF
         if [ -d "$PYENV_ROOT/plugins/pyenv-update" ]; then
             pyenv update
         else
-            git -C "$PYENV_ROOT" pull
+            echo "🌐 更新 pyenv 时，优先尝试 GitHub..."
+            if ! git -C "$PYENV_ROOT" pull; then
+                echo "⚠️ GitHub 更新失败，尝试 Gitee 镜像..."
+                git -C "$PYENV_ROOT" remote set-url origin "$PYENV_GITEE_REPO"
+                git -C "$PYENV_ROOT" pull
+                git -C "$PYENV_ROOT" remote set-url origin "$PYENV_GITHUB_REPO"
+            fi
         fi
     fi
 }
