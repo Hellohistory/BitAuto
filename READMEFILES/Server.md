@@ -28,13 +28,14 @@ bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/ubuntu_c
 
 ### **🔹 GitHub 托管版本**
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/server/ubuntu_change_source/ubuntu_change_source_zh.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/server/setup_vdisplay_auto/setup_vdisplay_auto_zh.sh)
 ```
 
 ### **🚀 国内 Gitee 加速版**
 ```bash
-bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/ubuntu_change_source/ubuntu_change_source_zh.sh)
+bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/setup_vdisplay_auto/setup_vdisplay_auto_zh.sh)
 ```
+
 ## 安装`RustDsek-Serve`服务器中继
 
 ### **🔹 GitHub 托管版本**
