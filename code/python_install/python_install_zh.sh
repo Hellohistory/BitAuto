@@ -27,7 +27,7 @@ install_dependencies() {
 # -----------------------
 # 确保 pyenv 已就绪
 # -----------------------
-en sure_pyenv() {
+ensure_pyenv() {
     if ! command -v pyenv &> /dev/null; then
         echo "🔧 未检测到 pyenv，开始安装 pyenv..."
         install_dependencies
