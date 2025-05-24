@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# -----------------------
+# 环境变量和镜像源配置
+# -----------------------
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PYENV_GITHUB_REPO="https://github.com/pyenv/pyenv.git"
 export PYENV_GITEE_REPO="https://gitee.com/mirrors/pyenv.git"
 export PYTHON_BUILD_MIRROR_URL="https://mirrors.tuna.tsinghua.edu.cn/python"
 
+# -----------------------
+# 安装系统依赖：pyenv 所需 + fzf
+# -----------------------
 install_dependencies() {
     echo "📦 安装系统依赖 (包括 fzf)..."
     sudo apt update
@@ -16,6 +22,9 @@ install_dependencies() {
         libffi-dev liblzma-dev git fzf
 }
 
+# -----------------------
+# 确保 pyenv 安装或更新
+# -----------------------
 ensure_pyenv() {
     if ! command -v pyenv &> /dev/null; then
         echo "🔧 未检测到 pyenv，开始安装..."
@@ -51,10 +60,16 @@ EOF
     fi
 }
 
+# -----------------------
+# 获取已安装的 Python 版本
+# -----------------------
 get_installed_versions() {
     mapfile -t INSTALLED < <(pyenv versions --bare)
 }
 
+# -----------------------
+# 交互式选择版本（带 ✅ 已安装标记）
+# -----------------------
 choose_versions_fzf() {
     echo
     echo "📋 获取可安装的 Python 版本列表（已安装版本 ✅ 标记）"
@@ -74,7 +89,7 @@ choose_versions_fzf() {
               --marker='[*]' \
               --header="空格选择，回车确认；已安装版本带 ✅" \
               --info=inline \
-              --color=marker:fg:yellow,prompt:fg:green,header:fg:cyan \
+              --color=marker:yellow,prompt:green,header:cyan \
               --bind=space:toggle \
         | sed 's/ ✅ 已安装//'
     )
@@ -85,6 +100,9 @@ choose_versions_fzf() {
     fi
 }
 
+# -----------------------
+# 安装选中版本
+# -----------------------
 install_versions() {
     for version in "${PYTHON_VERSIONS[@]}"; do
         echo "▶️ 安装 Python $version ..."
@@ -92,6 +110,9 @@ install_versions() {
     done
 }
 
+# -----------------------
+# pip 国内源选择
+# -----------------------
 choose_pip_source() {
     echo
     echo "🌐 请选择是否配置 pip 国内源（建议配置加速安装）"
@@ -99,7 +120,7 @@ choose_pip_source() {
     SOURCE=$(printf "TUNA 清华源\nAliyun 阿里云\nNo 不更换" | \
         fzf --prompt="pip 源选择 > " \
             --header="请选择 pip 镜像源用于新版本 Python" \
-            --height=10 --border --color=prompt:fg:green,header:fg:cyan)
+            --height=10 --border --color=prompt:green,header:cyan)
 
     case "$SOURCE" in
         "TUNA 清华源")
@@ -114,6 +135,9 @@ choose_pip_source() {
     esac
 }
 
+# -----------------------
+# 为每个安装版本配置 pip 源
+# -----------------------
 configure_pip_source() {
     if [ -z "$PIP_INDEX_URL" ]; then
         echo "⏩ 跳过 pip 源配置。"
@@ -130,6 +154,9 @@ EOF
     done
 }
 
+# -----------------------
+# 主流程入口
+# -----------------------
 main() {
     ensure_pyenv
     get_installed_versions
