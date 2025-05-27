@@ -70,8 +70,32 @@ install_harbor_online() {
         exit 1
     fi
 
-    # 赋予安装脚本可执行权限
+    # 检查 install.sh 是否存在
+    if [ ! -f "${WORKING_DIRECTORY}/install.sh" ]; then
+        echo "错误：未找到 install.sh 脚本。"
+        exit 1
+    fi
+
+    # 赋予 install.sh 可执行权限
     chmod +x "${WORKING_DIRECTORY}/install.sh"
+
+    # 复制并配置 harbor.yml
+    if [ -f "${WORKING_DIRECTORY}/harbor.yml.tmpl" ]; then
+        cp "${WORKING_DIRECTORY}/harbor.yml.tmpl" "${WORKING_DIRECTORY}/harbor.yml"
+        # 根据需要修改 harbor.yml，例如设置 hostname
+        sed -i "s/hostname: .*/hostname: your.domain.com/" "${WORKING_DIRECTORY}/harbor.yml"
+    else
+        echo "错误：未找到 harbor.yml.tmpl 文件。"
+        exit 1
+    fi
+
+    # 运行 install.sh 脚本
+    cd "$WORKING_DIRECTORY"
+    ./install.sh
+    if [ $? -ne 0 ]; then
+        echo "错误：运行 install.sh 脚本失败。"
+        exit 1
+    fi
 
     # 重载 Systemd 配置
     systemctl daemon-reload
@@ -101,8 +125,32 @@ install_harbor_offline() {
             exit 1
         fi
 
-        # 赋予安装脚本可执行权限
+        # 检查 install.sh 是否存在
+        if [ ! -f "${WORKING_DIRECTORY}/install.sh" ]; then
+            echo "错误：未找到 install.sh 脚本。"
+            exit 1
+        fi
+
+        # 赋予 install.sh 可执行权限
         chmod +x "${WORKING_DIRECTORY}/install.sh"
+
+        # 复制并配置 harbor.yml
+        if [ -f "${WORKING_DIRECTORY}/harbor.yml.tmpl" ]; then
+            cp "${WORKING_DIRECTORY}/harbor.yml.tmpl" "${WORKING_DIRECTORY}/harbor.yml"
+            # 根据需要修改 harbor.yml，例如设置 hostname
+            sed -i "s/hostname: .*/hostname: your.domain.com/" "${WORKING_DIRECTORY}/harbor.yml"
+        else
+            echo "错误：未找到 harbor.yml.tmpl 文件。"
+            exit 1
+        fi
+
+        # 运行 install.sh 脚本
+        cd "$WORKING_DIRECTORY"
+        ./install.sh
+        if [ $? -ne 0 ]; then
+            echo "错误：运行 install.sh 脚本失败。"
+            exit 1
+        fi
 
         # 重载 Systemd 配置
         systemctl daemon-reload

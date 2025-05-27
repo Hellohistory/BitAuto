@@ -47,3 +47,15 @@ bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/hea
 ```bash
 bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/install_rustdesk/install_rustdesk_zh.sh)
 ```
+
+## 安装`Harbor`镜像仓库
+
+### **🔹 GitHub 托管版本**
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/main/server/install_harbor/install_harbor_zh.sh)
+```
+
+### **🚀 国内 Gitee 加速版**
+```bash
+bash <(curl -sSL https://gitee.com/hellohistory/BitAuto/raw/main/server/install_harbor/install_harbor_zh.sh)
+```
