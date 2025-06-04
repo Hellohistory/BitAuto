@@ -9,6 +9,12 @@
 # 现脚本项目地址是：https://github.com/Hellohistory/BitAuto
 # 现脚本的地址是：https://raw.githubusercontent.com/Hellohistory/BitAuto/refs/heads/network/V2Ray/v2ray_zh.sh
 
+# 颜色定义
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+aoi=$(tput setaf 4)
+reset=$(tput sgr0)
+
 curl() {
   $(type -P curl) -L -q --retry 5 --retry-delay 10 --retry-max-time 60 "$@"
 }
