@@ -1,10 +1,9 @@
 #!/bin/bash
-
 set -e
 
 echo "📦 开始安装 Docker，并自动使用清华镜像源加速..."
 
-# 判断系统类型
+# 检测系统
 source /etc/os-release
 ID=${ID,,}
 VERSION_CODENAME=${VERSION_CODENAME:-$(. /etc/os-release && echo "$VERSION_CODENAME")}
@@ -26,6 +25,7 @@ for pkg in "${remove_old_packages[@]}"; do
     fi
 done
 
+# 按不同系统安装
 if [[ "$ID" == "debian" || "$ID" == "ubuntu" || "$ID" == "raspbian" ]]; then
     echo "🧩 安装依赖..."
     apt-get update
@@ -71,9 +71,32 @@ else
     exit 1
 fi
 
-echo "🚀 启动 Docker 服务..."
-systemctl enable docker
-systemctl start docker
+# 配置镜像加速器
+echo ""
+read -p "⚡ 是否配置 Docker 镜像加速器? (y/n): " config_mirror
+if [[ "$config_mirror" == "y" || "$config_mirror" == "Y" ]]; then
+    echo "🌐 常用加速器示例（可手动输入）:"
+    echo "  阿里云:      https://<你的ID>.mirror.aliyuncs.com"
+    echo "  中科大:      https://docker.mirrors.ustc.edu.cn"
+    echo "  网易云:      https://hub-mirror.c.163.com"
+    echo ""
+    read -p "请输入加速器地址（不输入则跳过）: " mirror_url
 
-echo "✅ Docker 安装完成！版本信息如下："
+    if [[ -n "$mirror_url" ]]; then
+        echo "📝 写入镜像加速配置到 /etc/docker/daemon.json"
+        mkdir -p /etc/docker
+        cat > /etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": ["$mirror_url"]
+}
+EOF
+    fi
+fi
+
+echo "🚀 启动并设置 Docker 开机自启..."
+systemctl enable docker
+systemctl daemon-reexec
+systemctl restart docker
+
+echo "✅ Docker 安装完成！版本如下："
 docker version
